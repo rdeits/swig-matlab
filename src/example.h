@@ -1,4 +1,5 @@
 #include <iostream>
+#include <Eigen/Core>
 
 /* A global variable */
 double Foo = 3.0;
@@ -16,6 +17,16 @@ public:
 
   int gcdPlusX(int y, int z) {
     return gcd(y, z) + x;
+  }
+
+  Eigen::MatrixXd gcdPlusXMatrix(Eigen::MatrixXd y, Eigen::MatrixXd z) {
+    Eigen::MatrixXd result(y.rows(), y.cols());
+    for (Eigen::DenseIndex i=0; i < y.rows(); i++) {
+      for (Eigen::DenseIndex j=0; j < y.cols(); j++) {
+        result(i,j) = this->gcdPlusX(y(i,j), z(i,j));
+      }
+    }
+    return result;
   }
 
   ~GCDPlusX() {

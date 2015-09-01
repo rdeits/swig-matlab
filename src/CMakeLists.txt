@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 2.8.6)
 
-add_library(libexample SHARED example.cpp)
+find_package( Eigen3 3.2 )
+if (EIGEN3_FOUND)
+  include_directories( ${EIGEN3_INCLUDE_DIR} )
+else()
+  message(FATAL_ERROR "Could not find eigen, which is a required depedency")
+endif()
+
+add_library(example SHARED example.cpp)
 
 include(../cmake/mex.cmake)
 mex_setup(REQUIRED)
@@ -16,7 +23,7 @@ set_source_files_properties(${I_FILE} PROPERTIES CPLUSPLUS ON)
 include_directories(${MATLAB_ROOT}/extern/include ${MATLAB_ROOT}/simulink/include )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 swig_add_module(exampleMATLAB_wrap matlab ${I_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/Matlabdef.def)
-swig_link_libraries(exampleMATLAB_wrap libexample)
+swig_link_libraries(exampleMATLAB_wrap example)
 add_definitions(/DMATLAB_MEX_FILE) #define matlab macros
 add_definitions(/DMX_COMPAT_32)
 
@@ -42,6 +49,6 @@ else()
 	endif()
 endif()
 
-install(TARGETS exampleMATLAB_wrap libexample DESTINATION matlab)
+install(TARGETS exampleMATLAB_wrap example DESTINATION matlab)
 
 
