@@ -5,7 +5,7 @@
 
 %fragment("Eigen_Fragments", "header")
 %{
-  template <typename T> int NumPyType() {return -1;};
+  template <typename T> mxClassID MxType() {return mxUNKNOWN_CLASS;};
 
   template <class Derived>
   bool ConvertFromMatlabToEigenMatrix(Eigen::MatrixBase<Derived>* out, const mxArray* in)
@@ -114,7 +114,7 @@
     size_t rows = in->rows();
     size_t cols = in->cols();
 
-    if (MxType<typename Derived::Scalar>() == -1) {
+    if (MxType<typename Derived::Scalar>() == mxUNKNOWN_CLASS) {
       mexPrintf("I don't know how to convert this scalar type to a Matlab matrix");
       return false;
     }
@@ -145,14 +145,14 @@
 %typemap(argout, fragment="Eigen_Fragments") CLASS &
 {
   // Argout: &
-  if (!CopyFromEigenToNumPyMatrix<CLASS >($input, $1))
+  if (!CopyFromEigenToMatlabMatrix<CLASS >($input, $1))
     SWIG_fail;
 }
 
 // In: (nothing: no constness)
 %typemap(in, fragment="Eigen_Fragments") CLASS (CLASS temp)
 {
-  if (!ConvertFromNumpyToEigenMatrix<CLASS >(&temp, $input))
+  if (!ConvertFromMatlabToEigenMatrix<CLASS >(&temp, $input))
     SWIG_fail;
   $1 = temp;
 }
@@ -160,7 +160,7 @@
 %typemap(in, fragment="Eigen_Fragments") CLASS const& (CLASS temp)
 {
   // In: const&
-  if (!ConvertFromNumpyToEigenMatrix<CLASS >(&temp, $input))
+  if (!ConvertFromMatlabToEigenMatrix<CLASS >(&temp, $input))
     SWIG_fail;
   $1 = &temp;
 }
@@ -168,7 +168,7 @@
 %typemap(in, fragment="Eigen_Fragments") CLASS & (CLASS temp)
 {
   // In: non-const&
-  if (!ConvertFromNumpyToEigenMatrix<CLASS >(&temp, $input))
+  if (!ConvertFromMatlabToEigenMatrix<CLASS >(&temp, $input))
     SWIG_fail;
 
   $1 = &temp;
@@ -176,96 +176,96 @@
 // In: const* (not yet implemented)
 %typemap(in, fragment="Eigen_Fragments") CLASS const*
 {
-  PyErr_SetString(PyExc_ValueError, "The input typemap for const pointer is not yet implemented. Please report this problem to the developer.");
+  mexPrintf("The input typemap for const pointer is not yet implemented. Please report this problem to the developer.");
   SWIG_fail;
 }
 // In: * (not yet implemented)
 %typemap(in, fragment="Eigen_Fragments") CLASS *
 {
-  PyErr_SetString(PyExc_ValueError, "The input typemap for non-const pointer is not yet implemented. Please report this problem to the developer.");
+  mexPrintf("The input typemap for non-const pointer is not yet implemented. Please report this problem to the developer.");
   SWIG_fail;
 }
 
 // Out: (nothing: no constness)
 %typemap(out, fragment="Eigen_Fragments") CLASS
 {
-  if (!ConvertFromEigenToNumPyMatrix<CLASS >(&$result, &$1))
+  if (!ConvertFromEigenToMatlabMatrix<CLASS >(&$result, &$1))
     SWIG_fail;
 }
 // Out: const
 %typemap(out, fragment="Eigen_Fragments") CLASS const
 {
-  if (!ConvertFromEigenToNumPyMatrix<CLASS >(&$result, &$1))
+  if (!ConvertFromEigenToMatlabMatrix<CLASS >(&$result, &$1))
     SWIG_fail;
 }
 // Out: const&
 %typemap(out, fragment="Eigen_Fragments") CLASS const&
 {
-  if (!ConvertFromEigenToNumPyMatrix<CLASS >(&$result, $1))
+  if (!ConvertFromEigenToMatlabMatrix<CLASS >(&$result, $1))
     SWIG_fail;
 }
 // Out: & (not yet implemented)
 %typemap(out, fragment="Eigen_Fragments") CLASS &
 {
-  PyErr_SetString(PyExc_ValueError, "The output typemap for non-const reference is not yet implemented. Please report this problem to the developer.");
+  mexPrintf("The output typemap for non-const reference is not yet implemented. Please report this problem to the developer.");
   SWIG_fail;
 }
 // Out: const* (not yet implemented)
 %typemap(out, fragment="Eigen_Fragments") CLASS const*
 {
-  PyErr_SetString(PyExc_ValueError, "The output typemap for const pointer is not yet implemented. Please report this problem to the developer.");
+  mexPrintf("The output typemap for const pointer is not yet implemented. Please report this problem to the developer.");
   SWIG_fail;
 }
 // Out: * (not yet implemented)
 %typemap(out, fragment="Eigen_Fragments") CLASS *
 {
-  PyErr_SetString(PyExc_ValueError, "The output typemap for non-const pointer is not yet implemented. Please report this problem to the developer.");
+  mexPrintf("The output typemap for non-const pointer is not yet implemented. Please report this problem to the developer.");
   SWIG_fail;
 }
 
-%typemap(out, fragment="Eigen_Fragments") std::vector<CLASS >
-{
-  $result = PyList_New($1.size());
-  if (!$result)
-    SWIG_fail;
-  for (size_t i=0; i != $1.size(); ++i) {
-    PyObject *out;
-    if (!ConvertFromEigenToNumPyMatrix(&out, &$1[i]))
-      SWIG_fail;
-    if (PyList_SetItem($result, i, out) == -1)
-      SWIG_fail;
-  }
-}
+// %typemap(out, fragment="Eigen_Fragments") std::vector<CLASS >
+// {
+//   $result = PyList_New($1.size());
+//   if (!$result)
+//     SWIG_fail;
+//   for (size_t i=0; i != $1.size(); ++i) {
+//     PyObject *out;
+//     if (!ConvertFromEigenToNumPyMatrix(&out, &$1[i]))
+//       SWIG_fail;
+//     if (PyList_SetItem($result, i, out) == -1)
+//       SWIG_fail;
+//   }
+// }
 
-%typemap(in, fragment="Eigen_Fragments") std::vector<CLASS > (std::vector<CLASS > temp)
-{
-  if (!PyList_Check($input))
-    SWIG_fail;
-  temp.resize(PyList_Size($input));
-  for (size_t i=0; i != PyList_Size($input); ++i) {
-    if (!ConvertFromNumpyToEigenMatrix<CLASS >(&(temp[i]), PyList_GetItem($input, i)))
-      SWIG_fail;
-  }
-  $1 = temp;
-}
+// %typemap(in, fragment="Eigen_Fragments") std::vector<CLASS > (std::vector<CLASS > temp)
+// {
+//   if (!PyList_Check($input))
+//     SWIG_fail;
+//   temp.resize(PyList_Size($input));
+//   for (size_t i=0; i != PyList_Size($input); ++i) {
+//     if (!ConvertFromNumpyToEigenMatrix<CLASS >(&(temp[i]), PyList_GetItem($input, i)))
+//       SWIG_fail;
+//   }
+//   $1 = temp;
+// }
 
 %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
     CLASS,
     const CLASS &,
     CLASS &
   {
-    $1 = is_array($input);
+    $1 = mxIsNumeric($input);
   }
 
-%typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
-  std::vector<CLASS >
-  {
-    $1 = PyList_Check($input) && ((PyList_Size($input) == 0) || is_array(PyList_GetItem($input, 0)));
-  }
+// %typecheck(SWIG_TYPECHECK_DOUBLE_ARRAY)
+//   std::vector<CLASS >
+//   {
+//     $1 = PyList_Check($input) && ((PyList_Size($input) == 0) || is_array(PyList_GetItem($input, 0)));
+//   }
 
 %typemap(in, fragment="Eigen_Fragments") const Eigen::Ref<const CLASS >& (CLASS temp)
 {
-  if (!ConvertFromNumpyToEigenMatrix<CLASS >(&temp, $input))
+  if (!ConvertFromMatlabToEigenMatrix<CLASS >(&temp, $input))
     SWIG_fail;
   Eigen::Ref<const CLASS > temp_ref(temp);
   $1 = &temp_ref;

@@ -8,7 +8,7 @@ ExternalProject_Add(swig-matlab
     GIT_TAG 3586dbf18c4d407b8321e0dafd24335002e28dc1
     DOWNLOAD_DIR ${EXTERNALS_DIR}/swig-matlab
     SOURCE_DIR ${EXTERNALS_DIR}/swig-matlab
-    # UPDATE_COMMAND ""
+    UPDATE_COMMAND ""
     PATCH_COMMAND ${EXTERNALS_DIR}/swig-matlab/autogen.sh
     CONFIGURE_COMMAND ${EXTERNALS_DIR}/swig-matlab/configure --prefix=${CMAKE_INSTALL_PREFIX} --with-matlab=${MATLAB_ROOT}
     BUILD_COMMAND make
